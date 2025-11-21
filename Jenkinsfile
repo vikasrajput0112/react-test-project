@@ -20,15 +20,12 @@ pipeline {
       }
     }
 
-    stage('Build React App') {
+    stage('Install & Build React App') {
       steps {
         script {
-          docker.image('node:18-alpine').inside {
-            sh '''
-              npm install
-              npm run build
-            '''
-          }
+          // Use bat commands on Windows Jenkins agent
+          bat 'npm install'
+          bat 'npm run build'
         }
       }
     }
@@ -37,12 +34,12 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           script {
-            sh '''
-              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-              docker build -t ${IMAGE_NAME}:${TAG} .
-              docker push ${IMAGE_NAME}:${TAG}
+            bat """
+              echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+              docker build -t %IMAGE_NAME%:%TAG% .
+              docker push %IMAGE_NAME%:%TAG%
               docker logout
-            '''
+            """
           }
         }
       }
@@ -52,13 +49,13 @@ pipeline {
       steps {
         withCredentials([file(credentialsId: env.KUBE_CRED, variable: 'KUBECONFIG_FILE')]) {
           script {
-            sh '''
-              export KUBECONFIG="$KUBECONFIG_FILE"
-              kubectl apply -f k8s/deployment.yaml -n ${NAMESPACE}
-              kubectl apply -f k8s/service.yaml -n ${NAMESPACE}
-              kubectl set image deployment/${DEPLOYMENT} ${CONTAINER_NAME}=${IMAGE_NAME}:${TAG} -n ${NAMESPACE} --record
-              kubectl rollout status deployment/${DEPLOYMENT} -n ${NAMESPACE} --timeout=180s
-            '''
+            bat """
+              set KUBECONFIG=%KUBECONFIG_FILE%
+              kubectl apply -f k8s/deployment.yaml -n %NAMESPACE%
+              kubectl apply -f k8s/service.yaml -n %NAMESPACE%
+              kubectl set image deployment/%DEPLOYMENT% %CONTAINER_NAME%=%IMAGE_NAME%:%TAG% -n %NAMESPACE% --record
+              kubectl rollout status deployment/%DEPLOYMENT% -n %NAMESPACE% --timeout=180s
+            """
           }
         }
       }
@@ -67,13 +64,13 @@ pipeline {
 
   post {
     success {
-      echo "Deployed image: ${IMAGE_NAME}:${TAG}"
+      echo "Deployed image: ${env.IMAGE_NAME}:${env.TAG}"
     }
     failure {
       echo "Pipeline failed. Check logs."
     }
     always {
-      echo "Finished pipeline"
+      bat 'echo Finished pipeline || exit /b 0'
     }
   }
 }
