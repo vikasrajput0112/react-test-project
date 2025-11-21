@@ -20,7 +20,7 @@ pipeline {
       }
     }
 
-    stage('Verify Node & NPM') {
+    stage('Verify Node and NPM') {
       steps {
         bat '''
           node -v
@@ -31,14 +31,14 @@ pipeline {
       }
     }
 
-    stage('Install & Build React App') {
+    stage('Install Dependencies and Build') {
       steps {
         bat 'npm install'
         bat 'npm run build'
       }
     }
 
-    stage('Build Docker Image & Push') {
+    stage('Build and Push Docker Image') {
       steps {
         withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           bat """
@@ -65,16 +65,9 @@ pipeline {
       }
     }
   }
-
   post {
     success {
-      echo "Deployed image: ${env.IMAGE_NAME}:${env.TAG}"
+      echo "Deployed ${env.IMAGE_NAME}:${env.TAG} successfully."
     }
     failure {
-      echo "Pipeline failed. Please check the logs."
-    }
-    always {
-      bat 'echo Finished pipeline || exit /b 0'
-    }
-  }
-}
+      echo "Pipeline failed. Please check logs for details."
