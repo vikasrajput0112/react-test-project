@@ -19,11 +19,23 @@ pipeline {
         checkout scm
       }
     }
+    
+    stage('Verify Node & NPM') {
+      steps {
+        script {
+          bat """
+            node -v
+            if ERRORLEVEL 1 exit /b 1
+            npm -v
+            if ERRORLEVEL 1 exit /b 1
+          """
+        }
+      }
+    }
 
     stage('Install & Build React App') {
       steps {
         script {
-          // Use bat commands on Windows Jenkins agent
           bat 'npm install'
           bat 'npm run build'
         }
@@ -67,7 +79,7 @@ pipeline {
       echo "Deployed image: ${env.IMAGE_NAME}:${env.TAG}"
     }
     failure {
-      echo "Pipeline failed. Check logs."
+      echo "Pipeline failed. Please check the logs and ensure Node.js, npm, Docker, and kubectl are properly installed."
     }
     always {
       bat 'echo Finished pipeline || exit /b 0'
