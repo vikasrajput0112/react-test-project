@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-test-deployment
+  labels:
+    app: react-test
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: react-test
+  template:
+    metadata:
+      labels:
+        app: react-test
+    spec:
+      containers:
+        - name: react-test-container
+          image: vikas0112/react-test-project:test
+          ports:
+            - containerPort: 80
