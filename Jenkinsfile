@@ -40,7 +40,13 @@ pipeline {
 
     stage('Build and Push Docker Image') {
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        withCredentials([
+          usernamePassword(
+            credentialsId: env.DOCKER_CREDS,
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+          )
+        ]) {
           bat """
             echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
             docker build -t %IMAGE_NAME%:%TAG% .
@@ -71,3 +77,9 @@ pipeline {
     }
     failure {
       echo "Pipeline failed. Please check logs for details."
+    }
+    always {
+      bat 'echo Finished pipeline || exit /b 0'
+    }
+  }
+}
